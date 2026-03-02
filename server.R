@@ -16,13 +16,33 @@ library(DT)
 
 # static objects
 dat_geo <- readRDS('clean_geo_data.RDS')
+dat_geo$trails <- dat_geo$trails %>% mutate(trail_id=1:n())
 dat_geo$bus_stops <- dat_geo$bus_stops %>% mutate(stop_id=1:n())
 
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
-    # reactive updates to inputs
+  # reactive updates to inputs
   
+  ## Selected trail from clicking
+  clicked_trail_name <- reactiveVal(NULL)
+  
+  observeEvent(input$map_shape_click, {
+    click_trail_id <- input$map_shape_click$id
+    
+    # look up the route_list for the clicked stop
+    clicked_trail <- trails_filtered_func() %>%
+      filter(trail_id == click_trail_id)
+    
+    # update input params
+    clicked_trail_name(clicked_trail$trail_name_clean)
+    
+    updateSelectInput(session, "trail_name",
+                      selected = clicked_trail_name())
+
+  })
+  
+  ## Bus routes for clicked bus stop
   clicked_routes <- reactiveVal(NULL)
   
   observeEvent(input$map_marker_click, {
@@ -32,17 +52,27 @@ function(input, output, session) {
     clicked_stop <- bus_stops_filtered_func() %>%
       filter(stop_id == click_id)
     
+    # update input params
     clicked_routes(clicked_stop$route_list)
     
     updateSelectInput(session, "bus_route_filter",
-                      selected = clicked_routes()
-    )
+                      selected = clicked_routes())
     updateNumericInput(session, 'bus_stop_buffer',
                        value = 1000)
   })
   
+  ## reset buttons
+  observeEvent(input$reset_filters, {
+    # bus
+    updateCheckboxInput(session, "show_bus_stops", value=FALSE)
+    updateSelectInput(session, "bus_route_filter", selected = "")
+    updateSelectInput(session, "bus_stop_buffer", selected = ".5")
+    # trail
+    updateSelectInput(session, "trail_name", selected = "")
+    updateSelectInput(session, "min_length", selected = 1)
+  })
+  
   observeEvent(input$reset_route, {
-    clicked_routes(NULL)
     updateSelectInput(session, "bus_route_filter", selected = "")
     updateSelectInput(session, "bus_stop_buffer", selected = ".5")
   })
@@ -140,11 +170,10 @@ function(input, output, session) {
             bus_stops_filtered$route_list, '</b>' 
           )
         
-        m_stops <- mapview(bus_stops_filtered,  
-                      label=stops_label,
-                      #zcol='in_service_flag',
-                      cex=5,
-                      legend=F)
+        m_stops <- mapview(bus_stops_filtered,   
+                           label=stops_label, 
+                           cex=5, 
+                           legend=F)
         
         m <- m + m_stops
       } 
@@ -190,8 +219,9 @@ function(input, output, session) {
         addProviderTiles(providers$CartoDB.Positron) %>%
         addPolylines(
           data = trails_filtered,
-          #color = trails_filtered$surf_type,
+          #color = ~surf_type,
           weight = 5,
+          layerId = ~trail_id,
           label = lapply(trails_label, HTML),  # render HTML in labels
           highlightOptions = highlightOptions(
             color = "yellow",

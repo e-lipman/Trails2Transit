@@ -21,11 +21,13 @@ fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
+            actionButton("reset_filters", "Reset search"),
             h3("STEP 1: Explore Trails"),
             textInput(
               'trail_name',
               'Search for a specific trail:',
               value = ""),
+            helpText('Enter a trail name or click on a trail on the map to select.'),
             sliderInput('min_length',
                         "Minimum trail length (mi):",
                         min = 0,
