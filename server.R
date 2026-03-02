@@ -21,7 +21,33 @@ dat_geo$bus_stops <- dat_geo$bus_stops %>% mutate(stop_id=1:n())
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
+    # reactive updates to inputs
+  
+  clicked_routes <- reactiveVal(NULL)
+  
+  observeEvent(input$map_marker_click, {
+    click_id <- input$map_marker_click$id
     
+    # look up the route_list for the clicked stop
+    clicked_stop <- bus_stops_filtered_func() %>%
+      filter(stop_id == click_id)
+    
+    clicked_routes(clicked_stop$route_list)
+    
+    updateSelectInput(session, "bus_route_filter",
+                      selected = clicked_routes()
+    )
+    updateNumericInput(session, 'bus_stop_buffer',
+                       value = 1000)
+  })
+  
+  observeEvent(input$reset_route, {
+    clicked_routes(NULL)
+    updateSelectInput(session, "bus_route_filter", selected = "")
+    updateSelectInput(session, "bus_stop_buffer", selected = ".5")
+  })
+  
+  
     # reactive helper funcs
   
     trails_filtered_func <- reactive({
@@ -34,25 +60,6 @@ function(input, output, session) {
         filter(grepl(TRAIL_SEARCH, trail_name_clean, ignore.case=T),
                len_miles_trail>=TRAIL_MIN_LEN) %>%
         mutate(dummy_id=as.character(row_number()))
-    })
-    
-    clicked_routes <- reactiveVal(NULL)
-    
-    observeEvent(input$map_marker_click, {
-      click_id <- input$map_marker_click$id
-      
-      
-      # look up the route_list for the clicked stop
-      clicked_stop <- bus_stops_filtered_func() %>%
-        filter(stop_id == click_id)
-      
-      clicked_routes(clicked_stop$route_list)
-      
-      updateSelectInput(session, "bus_route_filter",
-                        selected = clicked_routes()
-      )
-      updateNumericInput(session, 'bus_stop_buffer',
-                         value = 1000)
     })
     
     bus_stops_filtered_func <- reactive({

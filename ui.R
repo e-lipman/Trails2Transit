@@ -38,6 +38,8 @@ fluidPage(
               label   = "Search for bus stops near selected trails?",
               value   = FALSE  # default checked state
             ),
+            helpText(paste0('It is best to filter to specific routes before ',
+                     'selecting this option to avoid long load times.')),
             conditionalPanel(
               condition = "input.show_bus_stops == true",  # note: lowercase true (JavaScript)
               numericInput('bus_stop_buffer',
@@ -51,7 +53,8 @@ fluidPage(
                 'Search for a specific bus route:',
                 value = ""),
               helpText('Enter a route number or click on a bus stop on the map to see ',
-                       "all routes going to that stop.")
+                       "all routes going to that stop."),
+              actionButton("reset_route", "Reset bus route filters")
             ),
         ),
 
