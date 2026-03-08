@@ -14,10 +14,34 @@ library(leaflet)
 library(tidyverse)
 library(DT)
 
+library(googleway)
+library(glue)
+
 # static objects
 dat_geo <- readRDS('clean_geo_data.RDS')
 dat_geo$trails <- dat_geo$trails %>% mutate(trail_id=1:n())
 dat_geo$bus_stops <- dat_geo$bus_stops %>% mutate(stop_id=1:n())
+
+# dev
+
+start_location <- 
+  google_geocode(address = "437 NE 72nd St, Seattle, WA", 
+                 key = Sys.getenv("GOOGLE_API_KEY")) %>% 
+ geocode_coordinates()
+
+end_location <-
+  google_geocode(address = "401 5th ave, Seattle, WA", 
+                 key = Sys.getenv("GOOGLE_API_KEY")) %>% 
+  geocode_coordinates()
+
+route <- google_directions(
+  origin = c(start_location$lat, start_location$lng),
+  destination = c(end_location$lat, end_location$lng),
+  mode = "transit",
+  key = Sys.getenv("GOOGLE_API_KEY")
+)
+
+route_geo <- googleway::decode_pl(route$routes$overview_polyline$points)
 
 
 # Define server logic required to draw a histogram
@@ -77,6 +101,30 @@ function(input, output, session) {
     updateSelectInput(session, "bus_stop_buffer", selected = ".5")
   })
   
+  #reactivity for routing
+  start_location <- reactiveVal(NULL)
+  
+  observeEvent(input$geocode_end_btn, {
+    req(input$end_address)
+    
+    result <- google_geocode(
+      address = input$end_address,
+      key = Sys.getenv("GOOGLE_API_KEY")
+    )
+    
+    coords <- geocode_coordinates(result)
+    end_location(c(lat = coords$lat[1], lng = coords$lng[1]))
+    
+    # draw end marker
+    leafletProxy("map") %>%
+      clearGroup("end_marker") %>%
+      addMarkers(
+        lng = end_location()["lng"],
+        lat = end_location()["lat"],
+        label = "End",
+        group = "end_marker"
+      )
+  })
   
     # reactive helper funcs
   
@@ -116,79 +164,6 @@ function(input, output, session) {
       trails_menu <- trails_filtered_func() %>%
         distinct(trail_name_clean, len_miles_trail) %>%
         arrange(desc(len_miles_trail))
-    })
-    
-    output$map_old <- renderLeaflet({
-
-      # trails
-      trails_filtered <- trails_filtered_func()
-      
-      trails_label <- 
-        paste0(# trail name   
-          "<b>", trails_filtered$trail_name_clean, '</b>', 
-          # trail length 
-          "<br><b>Trail length: </b>",  
-          round(trails_filtered$len_miles_trail,1),  
-          ' miles', 
-          # trail part name 
-          "<br><b>Trail part: </b>",  
-          trails_filtered$trail_name, '</b>', 
-          # trail part len
-          "<br><b>Trail part length: </b>",  
-          round(trails_filtered$len_miles_part, 1), '</b>', 
-          # segment surface type 
-          "<br><b>Segment surface type: </b>",  
-          trails_filtered$surf_type, '</b>',
-          # segment length 
-          "<br><b>Segment length: </b>",  
-          round(trails_filtered$len_miles_segment, 1), '</b>' 
-        )
-      
-      surf_color_map <- c("Paved Trail" = "gray",  
-                          "On Street Trail" = "blue",  
-                          "Soft Surface Trail" = "brown")
-      trails_filitered <- trails_filtered %>%
-        mutate(surf_type=fct_relevel(surf_type, names(surf_color_map)))
-        
-      
-      m_trails <- mapview(trails_filtered,  
-                          label=trails_label,  
-                          zcol='surf_type',
-                          color = surf_color_map[levels(trails_filitered$surf_type)],
-                          lwd=5, 
-                          popup=F) 
-      m <- m_trails
-      
-      # bus stops
-      if (input$show_bus_stops){
-        bus_stops_filtered <- bus_stops_filtered_func()
-        
-        stops_label <- 
-          paste0( 
-            # Route numbers 
-            "<br><b>Routes: </b>",  
-            bus_stops_filtered$route_list, '</b>' 
-          )
-        
-        m_stops <- mapview(bus_stops_filtered,   
-                           label=stops_label, 
-                           cex=5, 
-                           legend=F)
-        
-        m <- m + m_stops
-      } 
-      
-      # county boundary
-      m_county <- mapview(dat_geo$county,
-                          color='blue',
-                          col.regions = NA,
-                          alpha.regions = 0,
-                          label='',
-                          popup = F,
-                          legend=F)
-      m <- m + m_county
-      
-      m@map
     })
     
     output$map <- renderLeaflet({
@@ -264,7 +239,56 @@ function(input, output, session) {
           fill = FALSE
         )
       
+      # route test
+      #m <-  m %>%
+      #  addPolylines(
+      #  lng = route_geo$lon,
+      #  lat = route_geo$lat,
+      #  color = "black",
+      #  weight = 4,
+      #  group = "route"
+      #)
+        
+      #leafletProxy("map") %>%
+        #clearGroup("route") %>%
+        #addPolylines(
+          #lng = route_geo$lon,
+          #lat = route_geo$lat,
+          #color = "pink",
+          #weight = 4,
+          #group = "route"
+      #)
+      
       m
+    })
+    
+    # Table with transit info
+    output$route_table <- renderTable({
+      # dev - static for now
+      
+      steps <- route$routes$legs[[1]]$steps[[1]]
+      
+      steps_info <- tibble(mode=steps$travel_mode,
+             route=steps$transit_details$line$short_name, 
+             time_elapsed=steps$duration$text,
+             distance=steps$distance$text,
+             depart_time=steps$transit_details$departure_time$text,
+             arrive_time=steps$transit_details$arrival_time$text,
+             depart_stop=steps$transit_details$departure_stop$name,
+             arrive_stop=steps$transit_details$arrival_stop$name)
+      
+      
+      out <- steps_info %>%
+        mutate(step=ifelse(mode=='TRANSIT', 
+                           as.character(glue('{route} ({depart_stop} -> {arrive_stop})')), 
+                           str_to_title(mode)),
+               time_distance_details=ifelse(mode=='TRANSIT',
+                                             as.character(glue('{time_elapsed} ({depart_time} - {arrive_time})')),
+                                             as.character(glue('{time_elapsed} ({distance})'))
+                                             )) %>%
+        select(step,time_distance_details)
+      
+      return(out)
     })
 
 }
