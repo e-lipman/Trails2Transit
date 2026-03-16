@@ -14,13 +14,6 @@ dat_geo <- readRDS('clean_geo_data.RDS')
 dat_geo$trails <- dat_geo$trails %>% mutate(trail_id=1:n())
 dat_geo$bus_stops <- dat_geo$bus_stops %>% mutate(stop_id=1:n())
 
-# dev
-
-end_location <-
-  google_geocode(address = "401 5th ave, Seattle, WA", 
-                 key = Sys.getenv("GOOGLE_API_KEY")) %>% 
-  geocode_coordinates()
-
 
 
 

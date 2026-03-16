@@ -50,11 +50,9 @@ output$map <- renderLeaflet({
 
 # Table with transit info
 output$route_table <- renderTable({
-  print('here')
   
-  # dev - static for now
   route <- get_route()
-    
+  
   steps <- route$routes$legs[[1]]$steps[[1]]
   
   steps_info <- tibble(mode=steps$travel_mode,

@@ -34,7 +34,7 @@ bus_stops_filtered_func <- reactive({
 
 
 ## map drawing helpers
-draw_trails_layer <-  function(m){
+draw_trails_layer <-  function(m, bkg_mode=F){
     trails_filtered <- trails_filtered_func()
     
     surf_color_map <- c("Paved Trail" = "blue",
@@ -56,25 +56,40 @@ draw_trails_layer <-  function(m){
       "<br><b>Segment length: </b>", round(trails_filtered$len_miles_segment, 1)
     )
     
-    out <- m %>% 
-      addPolylines(
-        data = trails_filtered,
-        color = unname(trails_filtered$color),
-        weight = 5,
-        layerId = ~trail_id,
-        label = lapply(trails_label, HTML),  # render HTML in labels
-        highlightOptions = highlightOptions(
-          color = "yellow",
-          weight = 10,
-          bringToFront = TRUE
-        )
-      ) %>%
-      addLegend(
-        position = "topright",
-        colors = unname(surf_color_map),
-        labels = names(surf_color_map),
-        title = "Surface Type"
-      )
+    if (!bkg_mode){
+      out <- m %>% 
+        addPolylines(
+          data = trails_filtered,
+          color = unname(trails_filtered$color),
+          weight = 5,
+          layerId = ~trail_id,
+          label = lapply(trails_label, HTML),  # render HTML in labels
+          highlightOptions = highlightOptions(
+            color = "yellow",
+            weight = 10,
+            bringToFront = TRUE
+          ),
+          group='trails'
+        ) %>%
+        addLegend(
+          position = "topright",
+          colors = unname(surf_color_map),
+          labels = names(surf_color_map),
+          title = "Surface Type",
+          layerId = 'trails_legend'
+        )  
+    } else {
+      out <- m %>% 
+        addPolylines(
+          data = trails_filtered,
+          color = 'gray',
+          weight = 2,
+          layerId = ~trail_id,
+          label = lapply(trails_label, HTML),  # render HTML in labels
+          group='trails'
+        ) 
+    }
+    
     
     out 
 }
