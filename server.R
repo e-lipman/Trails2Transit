@@ -5,6 +5,8 @@ function(input, output, session) {
   
   source("server_reactive_inputs.R", local=TRUE) 
   
+  source("server_routes.R", local=TRUE) 
+  
   source("server_map_makers.R", local=TRUE) 
   
   source("server_outputs.R", local=TRUE) 
