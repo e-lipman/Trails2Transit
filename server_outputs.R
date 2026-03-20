@@ -25,26 +25,6 @@ output$map <- renderLeaflet({
     m <- draw_bus_stops_layer(m)
   }
   
-  # route test
-  #m <-  m %>%
-  #  addPolylines(
-  #  lng = route_geo$lon,
-  #  lat = route_geo$lat,
-  #  color = "black",
-  #  weight = 4,
-  #  group = "route"
-  #)
-  
-  #leafletProxy("map") %>%
-  #clearGroup("route") %>%
-  #addPolylines(
-  #lng = route_geo$lon,
-  #lat = route_geo$lat,
-  #color = "pink",
-  #weight = 4,
-  #group = "route"
-  #)
-  
   m
 })
 

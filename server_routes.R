@@ -1,14 +1,3 @@
-# enter routing mode
-observeEvent(input$routing_mode, {
-  
-  leafletProxy("map") %>%
-    clearGroup("trails") %>%
-    removeControl("trails_legend") %>%
-    draw_trails_layer(bkg_mode=input$routing_mode)  
-
-})
-
-
 # set start and end location
 
 start_location <- reactiveVal(NULL)
