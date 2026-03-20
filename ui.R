@@ -34,7 +34,7 @@ fluidPage(
                         max = 20,
                         value = 1),
             
-            h3("STEP 2: Explore bus routes:"),
+            h3("STEP 2: Explore bus routes"),
             checkboxInput(
               inputId = "show_bus_stops",
               label   = "Search for bus stops near selected trails?",
@@ -58,13 +58,65 @@ fluidPage(
                        "all routes going to that stop."),
               actionButton("reset_route", "Reset bus route filters")
             ),
+            
+            h3("STEP 3: Routing"),
+            checkboxInput(
+              inputId = "routing_mode",
+              label   = "Enter routing mode?",
+              value   = FALSE),
+            conditionalPanel(
+              condition = "input.routing_mode == true",  
+              
+              # start location
+              h4('Select start location'),
+              radioButtons("start_location_method", 
+                           label = "Set start location by:",
+                           choices = c("Address" = "address", "Map click" = "click"),
+                           selected = "address"),
+              ## by address
+              conditionalPanel(
+                condition = "input.start_location_method == 'address'",
+                textInput("start_address", "Enter address for start location:", 
+                          placeholder = "Type an address..."),
+                actionButton("search_start", "Search", style = "margin-top: 25px"),
+              ),
+              ## By click
+              conditionalPanel(
+                condition = "input.start_location_method == 'click'",
+                helpText("Click anywhere on the map to set your start location")
+              ),
+              
+              # end location
+              h4('Select end location'),
+              radioButtons("end_location_method", 
+                           label = "Set end location by:",
+                           choices = c("Address" = "address", "Map click" = "click"),
+                           selected = "address"),
+              ## by address
+              conditionalPanel(
+                condition = "input.end_location_method == 'address'",
+                textInput("end_address", "Enter address for end location:", 
+                          placeholder = "Type an address..."),
+                actionButton("search_end", "Search", style = "margin-top: 25px"),
+              ),
+              ## By click
+              conditionalPanel(
+                condition = "input.end_location_method == 'click'",
+                helpText("Click anywhere on the map to set your end location")
+              ),
+             
+              actionButton("route_action", "Route!", style = "margin-top: 25px")
+            )
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
           leafletOutput("map", height = "500px"),
-          #h2("Trails by length:"),
-          #tableOutput("table")
+          conditionalPanel(
+              condition = "input.routing_mode == true", 
+              h3('Route info'), 
+              tableOutput("route_table")
+          )
         )
     )
 )
