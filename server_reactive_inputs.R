@@ -1,5 +1,14 @@
 # reset buttons
 observeEvent(input$reset_filters, {
+  # route
+  updateRadioButtons(session, "start_location_method", selected = "address")
+  updateTextInput(session, "start_address", value = "")
+  start_location(NULL)
+  
+  updateRadioButtons(session, "end_location_method", selected = "address")
+  updateTextInput(session, "end_address", value = "")
+  end_location(NULL)
+  
   # bus
   updateCheckboxInput(session, "show_bus_stops", value=FALSE)
   updateSelectInput(session, "bus_route_filter", selected = "")
@@ -19,6 +28,7 @@ observeEvent(input$reset_route, {
 clicked_trail_name <- reactiveVal(NULL)
 
 observeEvent(input$map_shape_click, {
+  req(input$steps=='step1_trail')
   click_trail_id <- input$map_shape_click$id
   
   # look up the route_list for the clicked stop
@@ -37,6 +47,7 @@ observeEvent(input$map_shape_click, {
 clicked_routes <- reactiveVal(NULL)
 
 observeEvent(input$map_marker_click, {
+  req(input$steps=='step2_bus')
   click_id <- input$map_marker_click$id
   
   # look up the route_list for the clicked stop
@@ -52,3 +63,13 @@ observeEvent(input$map_marker_click, {
                      value = 1000)
 })
 
+
+# reactivity for routing mode
+observeEvent(input$routing_mode, {
+  
+  leafletProxy("map") %>%
+    clearGroup("trails") %>%
+    removeControl("trails_legend") %>%
+    draw_trails_layer(bkg_mode=input$routing_mode)  
+  
+})
