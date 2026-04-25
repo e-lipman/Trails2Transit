@@ -110,18 +110,17 @@ observeEvent(input$map_click, {
 
 
 # get route
-get_route <- function(){
+get_route <- eventReactive(input$route_action, {
   google_directions(
-    origin = c(start_location()["lat"], start_location()["lng"]) %>% as.numeric(),
-    destination = c(end_location()["lat"], end_location()["lng"]) %>% as.numeric(),
+    origin = c(start_location()["lat"], start_location()["lng"]),
+    destination = c(end_location()["lat"], end_location()["lng"]),
     mode = "transit",
     key = Sys.getenv("GOOGLE_API_KEY")
   )
-}
+})
 
 # plot
 observeEvent(input$route_action, {
-  
   if (is.null(start_location())){
     showNotification(
       paste("Please select a start location"),

@@ -60,42 +60,44 @@ fluidPage(
                  ),
                  
                  bsCollapsePanel("STEP 3: Routing", value = "step3_route",
-                                 radioButtons("start_location_method", 
-                                              label = "Set start location by:",
-                                              choices = c("Address" = "address", "Map click" = "click"),
-                                              selected = "address"),
-                                 ## by address
-                                 conditionalPanel(
-                                   condition = "input.start_location_method == 'address'",
-                                   textInput("start_address", "Enter address for start location:", 
-                                             placeholder = "Type an address..."),
-                                   actionButton("search_start", "Search", style = "margin-top: 25px"),
+                                 bsCollapse(id='address_input',
+                                            bsCollapsePanel('Set Start Location', value='start',
+                                                            radioButtons("start_location_method", 
+                                                                        label = "Set start location by:",
+                                                                        choices = c("Address" = "address", "Map click" = "click"),
+                                                                        selected = "address"),
+                                                            ## by address
+                                                            conditionalPanel(
+                                                              condition = "input.start_location_method == 'address'",
+                                                              textInput("start_address", "Enter address for start location:", 
+                                                                        placeholder = "Type an address...",
+                                                                        value='Seattle Center'),
+                                                              actionButton("search_start", "Search", style = "margin-top: 25px"),
+                                                            ),
+                                                            ## By click
+                                                            conditionalPanel(
+                                                              condition = "input.start_location_method == 'click'",
+                                                              helpText("Click anywhere on the map to set your start location")
+                                                            )),
+                                            bsCollapsePanel('Set End Locatioin', value='end',
+                                                            radioButtons("end_location_method", 
+                                                                         label = "Set end location by:",
+                                                                         choices = c("Address" = "address", "Map click" = "click"),
+                                                                         selected = "address"),
+                                                            ## by address
+                                                            conditionalPanel(
+                                                              condition = "input.end_location_method == 'address'",
+                                                              textInput("end_address", "Enter address for end location:", 
+                                                                        placeholder = "Type an address..."),
+                                                              actionButton("search_end", "Search", style = "margin-top: 25px"),
+                                                            ),
+                                                            ## By click
+                                                            conditionalPanel(
+                                                              condition = "input.end_location_method == 'click'",
+                                                              helpText("Click anywhere on the map to set your end location")
+                                                            ))
+                                            
                                  ),
-                                 ## By click
-                                 conditionalPanel(
-                                   condition = "input.start_location_method == 'click'",
-                                   helpText("Click anywhere on the map to set your start location")
-                                 ),
-                                 
-                                 # end location
-                                 h4('Select end location'),
-                                 radioButtons("end_location_method", 
-                                              label = "Set end location by:",
-                                              choices = c("Address" = "address", "Map click" = "click"),
-                                              selected = "address"),
-                                 ## by address
-                                 conditionalPanel(
-                                   condition = "input.end_location_method == 'address'",
-                                   textInput("end_address", "Enter address for end location:", 
-                                             placeholder = "Type an address..."),
-                                   actionButton("search_end", "Search", style = "margin-top: 25px"),
-                                 ),
-                                 ## By click
-                                 conditionalPanel(
-                                   condition = "input.end_location_method == 'click'",
-                                   helpText("Click anywhere on the map to set your end location")
-                                 ),
-                                 
                                  actionButton("route_action", "Route!", style = "margin-top: 25px")
                  )
       )
@@ -104,11 +106,7 @@ fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       leafletOutput("map", height = "500px"),
-      conditionalPanel(
-        condition = "input.steps == 'step3_route'", 
-        h3('Route info'), 
-        tableOutput("route_table")
-      )
+      tableOutput("route_table")
     )
   )
 )

@@ -85,7 +85,6 @@ draw_trails_layer <-  function(m, bkg_mode=F){
           color = 'gray',
           weight = 2,
           layerId = ~trail_id,
-          label = lapply(trails_label, HTML),  # render HTML in labels
           group='trails'
         ) 
     }

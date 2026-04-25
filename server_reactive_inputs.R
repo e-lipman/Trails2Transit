@@ -65,11 +65,19 @@ observeEvent(input$map_marker_click, {
 
 
 # reactivity for routing mode
-observeEvent(input$routing_mode, {
-  
+
+## Relegate trails to background when in routing mode
+observeEvent(input$steps, {
   leafletProxy("map") %>%
     clearGroup("trails") %>%
     removeControl("trails_legend") %>%
-    draw_trails_layer(bkg_mode=input$routing_mode)  
+    draw_trails_layer(bkg_mode="step3_route" %in% input$steps)  
   
 })
+
+## Clost address input panels when route button pressed
+observeEvent(input$route_action, {
+  updateCollapse(session, "address_input", close = "start")
+  updateCollapse(session, "address_input", close = "end")
+})
+

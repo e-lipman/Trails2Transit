@@ -30,6 +30,9 @@ output$map <- renderLeaflet({
 
 # Table with transit info
 output$route_table <- renderTable({
+  if (is.null(start_location()) || is.null(end_location())) {
+    return(NULL)
+  }
   
   route <- get_route()
   
