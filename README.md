@@ -8,9 +8,17 @@ To be added
 
 ### Features
 
-- Routing
+- UI for routing
 
--- User input for start and end location (address or click on map)
+-- Allow user to select both start and end by map click
+
+-- Display selected start and end points in input panel
+
+-- Button to switch start and end points
+
+-- Select by current location?
+
+- Route display
 
 -- Show route segment info on map
 
@@ -18,9 +26,6 @@ To be added
 
 -- Show distance from start of trail
 
-- UI
-
--- Make the UI nicer to guide users through the steps sequentially
 
 ### Bugs
 
@@ -28,9 +33,8 @@ To be added
 
 - Start up behavior for route table
 
-- App crashes when clicking on line that isn't a trail (because of filter action)
-
 - Filtering to specific when clicking bus stop with multiple routes (if I keep that feature)
+
 
 ### Efficiency
 
